@@ -17,21 +17,21 @@ public:
 	constexpr Flags(Flags<U>&& flags) : m_Value(std::move(flags.m_Value)) { }
 
 	constexpr Flags& operator=(const ValueT& value) {
-		m_value = value;
+		m_Value = value;
 		return *this;
 	}
 	constexpr Flags& operator=(ValueT&& value) {
-		m_value = std::move(value);
+		m_Value = std::move(value);
 		return *this;
 	}
 	template <class U>
 	constexpr Flags& operator=(const Flags<U>& flags) {
-		m_value = flags.m_Value;
+		m_Value = flags.m_Value;
 		return *this;
 	}
 	template <class U>
 	constexpr Flags& operator=(Flags<U>&& flags) {
-		m_value = std::move(flags.m_Value);
+		m_Value = std::move(flags.m_Value);
 		return *this;
 	}
 
@@ -86,9 +86,37 @@ public:
 		m_Value >>= count;
 		return *this;
 	}
+	template <class U>
+	friend constexpr Flags operator-(const Flags& lhs, const Flags<U>& rhs) { return lhs.m_Value - rhs.m_Value; }
+	template <class U>
+	constexpr Flags& operator-=(const Flags<U>& rhs) {
+		m_Value -= rhs.m_Value;
+		return *this;
+	}
+	template <class U>
+	friend constexpr Flags operator+(const Flags& lhs, const Flags<U>& rhs) { return lhs.m_Value + rhs.m_Value; }
+	template <class U>
+	constexpr Flags& operator+=(const Flags<U>& rhs) {
+		m_Value += rhs.m_Value;
+		return *this;
+	}
+	template <class U>
+	friend constexpr Flags operator*(const Flags& lhs, const Flags<U>& rhs) { return lhs.m_Value * rhs.m_Value; }
+	template <class U>
+	constexpr Flags& operator*=(const Flags<U>& rhs) {
+		m_Value *= rhs.m_Value;
+		return *this;
+	}
+	template <class U>
+	friend constexpr Flags operator/(const Flags& lhs, const Flags<U>& rhs) { return lhs.m_Value / rhs.m_Value; }
+	template <class U>
+	constexpr Flags& operator/=(const Flags<U>& rhs) {
+		m_Value /= rhs.m_Value;
+		return *this;
+	}
 
 	friend std::ostream& operator<<(std::ostream& stream, const Flags& flags) { return stream << flags.m_Value; }
 
-protected:
+public:
 	ValueT m_Value;
 };

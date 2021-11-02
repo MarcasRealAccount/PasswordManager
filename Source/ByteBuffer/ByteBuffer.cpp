@@ -70,12 +70,12 @@ void ByteBuffer::setStringNT(std::size_t position, std::string_view string) {
 
 void ByteBuffer::setString(std::size_t position, std::string_view string) {
 	std::size_t actualLength = std::min(m_Bytes.size() - position, string.size());
-	std::memcpy(m_Bytes.data() + position, string.data(), string.size());
+	std::memcpy(m_Bytes.data() + position, string.data(), actualLength);
 }
 
 void ByteBuffer::setBytes(std::size_t position, const std::vector<std::uint8_t>& bytes) {
 	std::size_t actualLength = std::min(m_Bytes.size() - position, bytes.size());
-	std::memcpy(m_Bytes.data() + position, bytes.data(), bytes.size());
+	std::memcpy(m_Bytes.data() + position, bytes.data(), actualLength);
 }
 
 void ByteBuffer::addUI1(std::size_t position, std::uint8_t value) {

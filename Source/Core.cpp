@@ -1,25 +1,24 @@
 #include "Core.h"
 
 namespace Core {
-
-	std::ostream& operator<<(std::ostream& stream, const EPMConfigFlags& flags) {
+	std::ostream& printPMConfigFlags(std::ostream& stream, const PMConfigFlags& flags) {
 		std::ostringstream str;
 		bool hasAppended = false;
 
-		std::uint16_t value = flags.m_Value;
-		if (value == EPMConfigFlag::Unknown) {
+		PMConfigFlags value = flags;
+		if (value == PMConfigFlag::Unknown) {
 			str << "Unknown";
 		} else {
-			if ((value & EPMConfigFlag::Debug) == EPMConfigFlag::Debug) {
+			if ((value & PMConfigFlag::Debug) == PMConfigFlag::Debug) {
 				str << "Debug";
-				value -= EPMConfigFlag::Debug.m_Value;
+				value -= PMConfigFlag::Debug;
 				hasAppended = true;
 			}
-			if ((value & EPMConfigFlag::Dist) == EPMConfigFlag::Dist) {
+			if ((value & PMConfigFlag::Dist) == PMConfigFlag::Dist) {
 				if (hasAppended)
 					str << " | ";
 				str << "Dist";
-				value -= EPMConfigFlag::Dist.m_Value;
+				value -= PMConfigFlag::Dist;
 				hasAppended = true;
 			}
 			if (value != 0) {
@@ -32,38 +31,38 @@ namespace Core {
 		return stream << str.str();
 	}
 
-	std::ostream& operator<<(std::ostream& stream, const EPMSystemFlags& flags) {
+	std::ostream& printPMSystemFlags(std::ostream& stream, const PMSystemFlags& flags) {
 		std::ostringstream str;
 		bool hasAppended = false;
 
-		std::uint16_t value = flags.m_Value;
-		if (value == EPMSystemFlag::Unknown) {
+		PMSystemFlags value = flags;
+		if (value == PMSystemFlag::Unknown) {
 			str << "Unknown";
 		} else {
-			if ((value & EPMSystemFlag::Windows) == EPMSystemFlag::Windows) {
+			if ((value & PMSystemFlag::Windows) == PMSystemFlag::Windows) {
 				str << "Windows";
-				value -= EPMSystemFlag::Windows.m_Value;
+				value -= PMSystemFlag::Windows;
 				hasAppended = true;
 			}
-			if ((value & EPMSystemFlag::Macosx) == EPMSystemFlag::Macosx) {
+			if ((value & PMSystemFlag::Macosx) == PMSystemFlag::Macosx) {
 				if (hasAppended)
 					str << " | ";
 				str << "Macosx";
-				value -= EPMSystemFlag::Macosx.m_Value;
+				value -= PMSystemFlag::Macosx;
 				hasAppended = true;
 			}
-			if ((value & EPMSystemFlag::Linux) == EPMSystemFlag::Linux) {
+			if ((value & PMSystemFlag::Linux) == PMSystemFlag::Linux) {
 				if (hasAppended)
 					str << " | ";
 				str << "Linux";
-				value -= EPMSystemFlag::Linux.m_Value;
+				value -= PMSystemFlag::Linux;
 				hasAppended = true;
 			}
-			if ((value & EPMSystemFlag::Unix) == EPMSystemFlag::Unix) {
+			if ((value & PMSystemFlag::Unix) == PMSystemFlag::Unix) {
 				if (hasAppended)
 					str << " | ";
 				str << "Unix";
-				value -= EPMSystemFlag::Unix.m_Value;
+				value -= PMSystemFlag::Unix;
 				hasAppended = true;
 			}
 			if (value != 0) {
@@ -76,31 +75,31 @@ namespace Core {
 		return stream << str.str();
 	}
 
-	std::ostream& operator<<(std::ostream& stream, const EPMToolsetFlags& flags) {
+	std::ostream& printPMToolsetFlags(std::ostream& stream, const PMToolsetFlags& flags) {
 		std::ostringstream str;
 		bool hasAppended = false;
 
-		std::uint16_t value = flags.m_Value;
-		if (value == EPMToolsetFlag::Unknown) {
+		PMToolsetFlags value = flags;
+		if (value == PMToolsetFlag::Unknown) {
 			str << "Unknown";
 		} else {
-			if ((value & EPMToolsetFlag::MSVC) == EPMToolsetFlag::MSVC) {
+			if ((value & PMToolsetFlag::MSVC) == PMToolsetFlag::MSVC) {
 				str << "MSVC";
-				value -= EPMToolsetFlag::MSVC.m_Value;
+				value -= PMToolsetFlag::MSVC;
 				hasAppended = true;
 			}
-			if ((value & EPMToolsetFlag::Clang) == EPMToolsetFlag::Clang) {
+			if ((value & PMToolsetFlag::Clang) == PMToolsetFlag::Clang) {
 				if (hasAppended)
 					str << " | ";
 				str << "Clang";
-				value -= EPMToolsetFlag::Clang.m_Value;
+				value -= PMToolsetFlag::Clang;
 				hasAppended = true;
 			}
-			if ((value & EPMToolsetFlag::GCC) == EPMToolsetFlag::GCC) {
+			if ((value & PMToolsetFlag::GCC) == PMToolsetFlag::GCC) {
 				if (hasAppended)
 					str << " | ";
 				str << "GCC";
-				value -= EPMToolsetFlag::GCC.m_Value;
+				value -= PMToolsetFlag::GCC;
 				hasAppended = true;
 			}
 			if (value != 0) {
@@ -113,24 +112,24 @@ namespace Core {
 		return stream << str.str();
 	}
 
-	std::ostream& operator<<(std::ostream& stream, const EPMPlatformFlags& flags) {
+	std::ostream& printPMPlatformFlags(std::ostream& stream, const PMPlatformFlags& flags) {
 		std::ostringstream str;
 		bool hasAppended = false;
 
-		std::uint16_t value = flags.m_Value;
-		if (value == EPMPlatformFlag::Unknown) {
+		PMPlatformFlags value = flags;
+		if (value == PMPlatformFlag::Unknown) {
 			str << "Unknown";
 		} else {
-			if ((value & EPMPlatformFlag::X86) == EPMPlatformFlag::X86) {
+			if ((value & PMPlatformFlag::X86) == PMPlatformFlag::X86) {
 				str << "X86";
-				value -= EPMPlatformFlag::X86.m_Value;
+				value -= PMPlatformFlag::X86;
 				hasAppended = true;
 			}
-			if ((value & EPMPlatformFlag::AMD64) == EPMPlatformFlag::AMD64) {
+			if ((value & PMPlatformFlag::AMD64) == PMPlatformFlag::AMD64) {
 				if (hasAppended)
 					str << " | ";
 				str << "AMD64";
-				value -= EPMPlatformFlag::AMD64.m_Value;
+				value -= PMPlatformFlag::AMD64;
 				hasAppended = true;
 			}
 			if (value != 0) {

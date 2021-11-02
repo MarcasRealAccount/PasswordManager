@@ -67,11 +67,8 @@ workspace("PasswordManager")
 		targetdir("%{wks.location}/Bin/%{cfg.system}-%{cfg.buildcfg}-%{cfg.platform}/")
 		objdir("%{wks.location}/Bin/Int-%{cfg.system}-%{cfg.buildcfg}-%{cfg.platform}/%{prj.name}")
 		debugdir("%{prj.location}/Run/")
-
-		filter("system:windows")
-			links({ "Bcrypt" })
-
-		filter({})
+		
+		links({ "crypto" })
 		
 		includedirs({ "%{prj.location}/Source/" })
 		
@@ -80,7 +77,7 @@ workspace("PasswordManager")
 		filter("files:**.h")
 			runclangformat(true)
 		
-		filter("files:**.cpp")
+		filter("files:**.cpp or **.mm")
 			runclangformat(true)
 			runclangtidy(true)
 		

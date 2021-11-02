@@ -6,10 +6,12 @@
 #include <vector>
 
 namespace Crypto {
-	struct Key;
+	struct Key {
+	};
 
 	void init();
 	void deinit();
+bool isInitialized();
 
 	Key* getKey(std::string_view password);
 	void deleteKey(Key* key);
