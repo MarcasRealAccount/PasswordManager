@@ -22,5 +22,8 @@ Makefile
 # Windows
 *.bat
 
+# Unix
+*.sh
+
 # Temp Files
 *.ds
