@@ -19,5 +19,8 @@ Makefile
 # Macos
 *.DS_Store
 
+# Windows
+*.bat
+
 # Temp Files
 *.ds

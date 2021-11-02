@@ -1,3 +1,17 @@
+local function removeOsSpecificLibraryAffixes(filename)
+	if path.islinkable(filename) then
+		local basename = path.getbasename(filename)
+		if os.host() == "windows" then
+			return basename
+		elseif string.startswith(basename, "lib") then
+			return string.sub(basename, 4, -1)
+		else
+			return basename
+		end
+	end
+	return filename
+end
+
 require("Premake/cleanAction")
 require("Premake/formatTidyAction")
 
@@ -90,7 +104,8 @@ workspace("PasswordManager")
 		})
 		
 		libdirs({ path.getdirectory(openSSLLibCryptoPath) })
-		links({ path.getname(openSSLLibCryptoPath) })
+		
+		links({ removeOsSpecificLibraryAffixes(path.getname(openSSLLibCryptoPath)) })
 		sysincludedirs({ openSSLInclude })
 		
 		includedirs({ "%{prj.location}/Source/" })
