@@ -7,11 +7,13 @@
 
 namespace Crypto {
 	struct Key {
+	public:
+		std::uint8_t* m_Key;
 	};
 
 	void init();
 	void deinit();
-bool isInitialized();
+	bool isInitialized();
 
 	Key* getKey(std::string_view password);
 	void deleteKey(Key* key);

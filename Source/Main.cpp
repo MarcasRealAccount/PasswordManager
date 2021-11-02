@@ -13,6 +13,8 @@ int main() {
 	dataStore.deserialize(key, "test.ds");
 
 	dataStore.addElement("MyVerySecretPassword", stringToVector("IShatMyself553"));
+	std::uint64_t id = dataStore.addElement("hjasjkd", {});
+	dataStore.removeElement(id);
 
 	dataStore.serialize(key, "test.ds");
 

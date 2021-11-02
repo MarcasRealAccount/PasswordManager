@@ -16,6 +16,12 @@ std::uint64_t DataStore::addElement(const std::string& name, const std::vector<s
 	return id;
 }
 
+void DataStore::removeElement(std::uint64_t id) {
+	auto itr = m_Elements.find(id);
+	if (itr != m_Elements.end())
+		m_Elements.erase(itr);
+}
+
 DataElement* DataStore::getElement(std::uint64_t id) {
 	if (id == 0)
 		return nullptr;

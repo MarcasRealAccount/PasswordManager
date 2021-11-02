@@ -1,6 +1,19 @@
 require("Premake/cleanAction")
 require("Premake/formatTidyAction")
 
+local openSSLLibCryptoPath = os.getenv("OPENSSL_LIB_CRYPTO_PATH")
+if not openSSLLibCryptoPath then
+	error("Please find the path to openssl libcrypto and set 'OPENSSL_LIB_CRYPTO_PATH' environment variable to that!")
+end
+local openSSLLibCryptoSharedPath = os.getenv("OPENSSL_LIB_CRYPTO_SHARED_PATH")
+if not openSSLLibCryptoSharedPath then
+	error("Please find the path to openssl libcrypto shared library and set 'OPENSSL_LIB_CRYPTO_SHARED_PATH' environment variable to that!")
+end
+local openSSLInclude = os.getenv("OPENSSL_INCLUDE")
+if not openSSLInclude then
+	error("Please find the path to openssl include and set 'OPENSSL_INCLUDE' environment variable to that!")
+end
+
 workspace("PasswordManager")
 	configurations({ "Debug", "Release", "Dist" })
 	platforms({ "x86", "x64" })
@@ -68,7 +81,17 @@ workspace("PasswordManager")
 		objdir("%{wks.location}/Bin/Int-%{cfg.system}-%{cfg.buildcfg}-%{cfg.platform}/%{prj.name}")
 		debugdir("%{prj.location}/Run/")
 		
-		links({ "crypto" })
+		local openSSLLibCryptoPath = path.translate(openSSLLibCryptoPath, "/")
+		local openSSLLibCryptoDir = path.getdirectory(openSSLLibCryptoPath)
+		local openSSLLibCryptoSharedPath = path.translate(openSSLLibCryptoSharedPath, "/")
+		
+		postbuildcommands({
+			"{COPY} \"" .. openSSLLibCryptoSharedPath .. "\" \"Bin/%{cfg.system}-%{cfg.buildcfg}-%{cfg.platform}/\""
+		})
+		
+		libdirs({ path.getdirectory(openSSLLibCryptoPath) })
+		links({ path.getname(openSSLLibCryptoPath) })
+		sysincludedirs({ openSSLInclude })
 		
 		includedirs({ "%{prj.location}/Source/" })
 		

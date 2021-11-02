@@ -23,6 +23,7 @@ public:
 	auto& getElements() const { return m_Elements; }
 
 	std::uint64_t addElement(const std::string& name, const std::vector<std::uint8_t>& data);
+	void removeElement(std::uint64_t id);
 	DataElement* getElement(std::uint64_t id);
 
 	void deserialize(Crypto::Key* key, std::filesystem::path filepath);
