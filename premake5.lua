@@ -30,7 +30,7 @@ end
 
 workspace("PasswordManager")
 	configurations({ "Debug", "Release", "Dist" })
-	platforms({ "x86", "x64" })
+	platforms({ "x64" }) -- "x86", 
 	
 	cppdialect("C++17")
 	rtti("Off")
