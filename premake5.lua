@@ -231,7 +231,7 @@ end
 		filter("configurations:Debug")
 			kind("ConsoleApp")
 		
-		filter("configurations:Debug")
+		filter("configurations:Release or Dist")
 			kind("WindowedApp")
 		
 		filter({})
