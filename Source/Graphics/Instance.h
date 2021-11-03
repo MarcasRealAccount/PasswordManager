@@ -1,4 +1,4 @@
-#pramga once
+#pragma once
 
 #include "Common.h"
 
@@ -42,7 +42,7 @@ namespace Graphics {
 	public:
 		Instance(std::string_view appName, Version appVersion, std::string_view engineName, Version engineVersion, Version minAPIVersion = {}, Version maxAPIVersion = { ~0U });
 		~Instance();
-		
+
 		void setDebug(Debug& debug);
 		auto& getDebug() { return *m_Debug; }
 		auto& getDebug() const { return *m_Debug; }

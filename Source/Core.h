@@ -156,3 +156,7 @@ namespace Core {
 	static constexpr bool s_IsPlatformAMD64     = false;
 #endif
 } // namespace Core
+
+#ifndef GLFW_INCLUDE_NONE
+	#define GLFW_INCLUDE_NONE
+#endif

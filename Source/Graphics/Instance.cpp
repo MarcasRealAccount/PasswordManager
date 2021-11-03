@@ -82,7 +82,7 @@ namespace Graphics {
 		if (isValid())
 			destroy();
 	}
-	
+
 	void Instance::setDebug(Debug& debug) {
 		m_Debug = &debug;
 	}
@@ -152,7 +152,7 @@ namespace Graphics {
 		for (auto& layer : m_Layers) {
 			bool found = false;
 			for (auto& availLayer : s_CachedAvailableLayers) {
-				if (availLayer.m_Name == layer.m_Name && availLayer.m_Version < layer.m_Version) {
+				if (availLayer.m_Name == layer.m_Name && availLayer.m_Version >= layer.m_Version) {
 					m_EnabledLayers.push_back(availLayer);
 					found = true;
 					break;
@@ -167,7 +167,7 @@ namespace Graphics {
 		for (auto& extension : m_Extensions) {
 			bool found = false;
 			for (auto& availExtension : s_CachedAvailableExtensions) {
-				if (availExtension.m_Name == extension.m_Name && availExtension.m_Version < extension.m_Version) {
+				if (availExtension.m_Name == extension.m_Name && availExtension.m_Version >= extension.m_Version) {
 					m_EnabledExtensions.push_back(availExtension);
 					found = true;
 					break;
@@ -234,7 +234,7 @@ namespace Graphics {
 			createInfo.pNext = &debugCreateInfo;
 		}
 
-		auto result  = vkCreateInstance(&createInfo, nullptr, &m_Handle);
+		auto result = vkCreateInstance(&createInfo, nullptr, &m_Handle);
 		if (result == VK_SUCCESS)
 			m_ApiVersion = instanceVersion;
 	}
@@ -244,5 +244,6 @@ namespace Graphics {
 		m_EnabledLayers.clear();
 		m_EnabledExtensions.clear();
 		m_ApiVersion = {};
+		return true;
 	}
 } // namespace Graphics

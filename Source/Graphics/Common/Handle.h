@@ -144,7 +144,7 @@ namespace Graphics::Detail {
 			Base::m_DestroyedChildren.clear();
 
 		for (Base::m_ChildItr = 0; Base::m_ChildItr < Base::m_Children.size(); ++Base::m_ChildItr) {
-			auto child = Base::m_Children[Base::m_Children];
+			auto child = Base::m_Children[Base::m_ChildItr];
 
 			if (child->isValid()) {
 				child->destroy();

@@ -11,17 +11,17 @@ namespace Core {
 		} else {
 			if ((value & PMConfigFlag::Debug) == PMConfigFlag::Debug) {
 				str << "Debug";
-				value -= PMConfigFlag::Debug;
+				value &= ~PMConfigFlag::Debug;
 				hasAppended = true;
 			}
 			if ((value & PMConfigFlag::Dist) == PMConfigFlag::Dist) {
 				if (hasAppended)
 					str << " | ";
 				str << "Dist";
-				value -= PMConfigFlag::Dist;
+				value &= ~PMConfigFlag::Dist;
 				hasAppended = true;
 			}
-			if (value != 0) {
+			if (static_cast<std::uint16_t>(value) != 0) {
 				if (hasAppended)
 					str << " | ";
 				str << value;
@@ -41,31 +41,31 @@ namespace Core {
 		} else {
 			if ((value & PMSystemFlag::Windows) == PMSystemFlag::Windows) {
 				str << "Windows";
-				value -= PMSystemFlag::Windows;
+				value &= ~PMSystemFlag::Windows;
 				hasAppended = true;
 			}
 			if ((value & PMSystemFlag::Macosx) == PMSystemFlag::Macosx) {
 				if (hasAppended)
 					str << " | ";
 				str << "Macosx";
-				value -= PMSystemFlag::Macosx;
+				value &= ~PMSystemFlag::Macosx;
 				hasAppended = true;
 			}
 			if ((value & PMSystemFlag::Linux) == PMSystemFlag::Linux) {
 				if (hasAppended)
 					str << " | ";
 				str << "Linux";
-				value -= PMSystemFlag::Linux;
+				value &= ~PMSystemFlag::Linux;
 				hasAppended = true;
 			}
 			if ((value & PMSystemFlag::Unix) == PMSystemFlag::Unix) {
 				if (hasAppended)
 					str << " | ";
 				str << "Unix";
-				value -= PMSystemFlag::Unix;
+				value &= ~PMSystemFlag::Unix;
 				hasAppended = true;
 			}
-			if (value != 0) {
+			if (static_cast<std::uint16_t>(value) != 0) {
 				if (hasAppended)
 					str << " | ";
 				str << value;
@@ -85,24 +85,24 @@ namespace Core {
 		} else {
 			if ((value & PMToolsetFlag::MSVC) == PMToolsetFlag::MSVC) {
 				str << "MSVC";
-				value -= PMToolsetFlag::MSVC;
+				value &= ~PMToolsetFlag::MSVC;
 				hasAppended = true;
 			}
 			if ((value & PMToolsetFlag::Clang) == PMToolsetFlag::Clang) {
 				if (hasAppended)
 					str << " | ";
 				str << "Clang";
-				value -= PMToolsetFlag::Clang;
+				value &= ~PMToolsetFlag::Clang;
 				hasAppended = true;
 			}
 			if ((value & PMToolsetFlag::GCC) == PMToolsetFlag::GCC) {
 				if (hasAppended)
 					str << " | ";
 				str << "GCC";
-				value -= PMToolsetFlag::GCC;
+				value &= ~PMToolsetFlag::GCC;
 				hasAppended = true;
 			}
-			if (value != 0) {
+			if (static_cast<std::uint16_t>(value) != 0) {
 				if (hasAppended)
 					str << " | ";
 				str << value;
@@ -122,17 +122,17 @@ namespace Core {
 		} else {
 			if ((value & PMPlatformFlag::X86) == PMPlatformFlag::X86) {
 				str << "X86";
-				value -= PMPlatformFlag::X86;
+				value &= ~PMPlatformFlag::X86;
 				hasAppended = true;
 			}
 			if ((value & PMPlatformFlag::AMD64) == PMPlatformFlag::AMD64) {
 				if (hasAppended)
 					str << " | ";
 				str << "AMD64";
-				value -= PMPlatformFlag::AMD64;
+				value &= ~PMPlatformFlag::AMD64;
 				hasAppended = true;
 			}
-			if (value != 0) {
+			if (static_cast<std::uint16_t>(value) != 0) {
 				if (hasAppended)
 					str << " | ";
 				str << value;

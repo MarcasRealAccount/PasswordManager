@@ -186,8 +186,8 @@ end
 	project("VMA")
 		location("ThirdParty/VMA/")
 		kind("StaticLib")
-		targetdir("%{wks.location}/Int/%{cfg.system}-%{cfg.platform}-%{cfg.buildcfg}/%{prj.name}/")
-		objdir("%{wks.location}/Int/%{cfg.system}-%{cfg.platform}-%{cfg.buildcfg}/%{prj.name}/")
+		targetdir("%{wks.location}/Bin/Int-%{cfg.system}-%{cfg.platform}-%{cfg.buildcfg}/%{prj.name}/")
+		objdir("%{wks.location}/Bin/Int-%{cfg.system}-%{cfg.platform}-%{cfg.buildcfg}/%{prj.name}/")
 		removedefines({ "NOMINMAX", "WIN32_LEAN_AND_MEAN" })
 		
 		warnings("Off")
