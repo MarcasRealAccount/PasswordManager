@@ -1,0 +1,9 @@
+[submodule "ThirdParty/GLFW"]
+	path = ThirdParty/GLFW
+	url = https://www.github.com/glfw/glfw.git
+[submodule "ThirdParty/STB"]
+	path = ThirdParty/STB
+	url = https://www.github.com/nothings/stb.git
+[submodule "ThirdParty/VMA"]
+	path = ThirdParty/VMA
+	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git

@@ -1,13 +1,22 @@
 #include "Crypto.h"
 #include "DataStore/DataStore.h"
 
+#include <iostream>
+
 std::vector<std::uint8_t> stringToVector(std::string_view string) {
 	return std::vector<std::uint8_t>(string.begin(), string.end());
 }
 
 int main() {
 	Crypto::init();
-	Crypto::Key* key = Crypto::getKey("BallsBeItching");
+
+	std::string output;
+	Crypto::Key* key = Crypto::getTOTPKey("GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ");
+	Crypto::getTOTP(key, 20000000000, 30, 8, output);
+	Crypto::deleteTOTPKey(key);
+	std::cout << output << std::endl;
+
+	/*Crypto::Key* key = Crypto::getKey("BallsBeItching");
 
 	DataStore dataStore;
 	dataStore.deserialize(key, "test.ds");
@@ -18,6 +27,6 @@ int main() {
 
 	dataStore.serialize(key, "test.ds");
 
-	Crypto::deleteKey(key);
+	Crypto::deleteKey(key);*/
 	Crypto::deinit();
 }

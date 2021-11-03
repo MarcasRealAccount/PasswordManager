@@ -15,6 +15,17 @@ end
 require("Premake/cleanAction")
 require("Premake/formatTidyAction")
 
+newoption({
+	trigger = "glfw_use_wayland",
+	description = "Should glfw use wayland for linux build",
+	value = "boolean",
+	allowed = {
+		{ "N", "No" },
+		{ "Y", "Yes" }
+	},
+	default = "N"
+})
+
 local openSSLLibCryptoPath = os.getenv("OPENSSL_LIB_CRYPTO_PATH")
 if not openSSLLibCryptoPath then
 	error("Please find the path to openssl libcrypto and set 'OPENSSL_LIB_CRYPTO_PATH' environment variable to that!")
@@ -26,6 +37,18 @@ end
 local openSSLInclude = os.getenv("OPENSSL_INCLUDE")
 if not openSSLInclude then
 	error("Please find the path to openssl include and set 'OPENSSL_INCLUDE' environment variable to that!")
+end
+
+local vulkanSDKPath = os.getenv("VULKAN_SDK")
+if not vulkanSDKPath then
+	local hostOS = os.host()
+	if hostOS == "windows" then
+		error("Have you installed the Vulkan SDK correctly.\nIf you have then please go into environment variables and add 'VULKAN_SDK' with the path to the SDK!")
+	elseif hostOS == "macosx" then
+		error("Please find the Vulkan SDK and run the 'setup-env.sh' script in a terminal environment before running premake again!\nYou can open '~/.zshrc' or '~/.bashrc' and add:\ncd \"PathToVulkanSDK\"\nsource setup-env.sh\ncd ~/")
+	else
+		error("Please find the Vulkan SDK and run the 'setup-env.sh' script in a terminal environment before running premake again!\nYou can open '~/.zshrc' or '~/.bashrc' and add 'source \"PathToVulkanSDK/setup-env.sh\"'")
+	end
 end
 
 workspace("PasswordManager")
@@ -88,12 +111,130 @@ workspace("PasswordManager")
 	
 	startproject("PasswordManager")
 	
+	project("GLFW")
+		location("ThirdParty/GLFW/")
+		kind("StaticLib")
+		targetdir("%{wks.location}/Bin/Int-%{cfg.system}-%{cfg.platform}-%{cfg.buildcfg}/%{prj.name}/")
+		objdir("%{wks.location}/Bin/Int-%{cfg.system}-%{cfg.platform}-%{cfg.buildcfg}/%{prj.name}/")
+		
+		warnings("Off")
+
+		includedirs({ "%{prj.location}/include/" })
+
+		files({
+			"%{prj.location}/include/**",
+			"%{prj.location}/src/context.c",
+			"%{prj.location}/src/init.c",
+			"%{prj.location}/src/input.c",
+			"%{prj.location}/src/internal.h",
+			"%{prj.location}/src/mappings.h",
+			"%{prj.location}/src/monitor.c",
+			"%{prj.location}/src/null_*",
+			"%{prj.location}/src/platform.h",
+			"%{prj.location}/src/platform.c",
+			"%{prj.location}/src/vulkan.c",
+			"%{prj.location}/src/window.c",
+			"%{prj.location}/src/egl_*",
+			"%{prj.location}/src/osmesa_*"
+		})
+
+		filter("system:windows")
+			files({
+				"%{prj.location}/src/win32_*",
+				"%{prj.location}/src/wgl_*"
+			})
+
+			defines({ "_GLFW_WIN32" })
+
+		filter("system:linux")
+			files({
+				"%{prj.location}/src/linux_*",
+				"%{prj.location}/src/posix_*",
+				"%{prj.location}/src/xkb_*",
+				"%{prj.location}/src/glx_*"
+			})
+			
+if _OPTIONS["glfw_use_wayland"] == "Y" then
+			files({
+				"%{prj.location}/src/wl_*"
+			})
+
+			defines({ "_GLFW_WAYLAND" })
+else
+			files({
+				"%{prj.location}/src/x11_*"
+			})
+
+			defines({ "_GLFW_X11" })
+end
+
+		filter("system:macosx")
+			files({
+				"%{prj.location}/src/cocoa_*",
+				"%{prj.location}/src/nsgl_*",
+				"%{prj.location}/src/posix_*"
+			})
+			removefiles({
+				"%{prj.location}/src/posix_time.h",
+				"%{prj.location}/src/posix_time.c"
+			})
+
+			defines({ "_GLFW_COCOA" })
+
+		filter({})
+	
+	project("VMA")
+		location("ThirdParty/VMA/")
+		kind("StaticLib")
+		targetdir("%{wks.location}/Int/%{cfg.system}-%{cfg.platform}-%{cfg.buildcfg}/%{prj.name}/")
+		objdir("%{wks.location}/Int/%{cfg.system}-%{cfg.platform}-%{cfg.buildcfg}/%{prj.name}/")
+		removedefines({ "NOMINMAX", "WIN32_LEAN_AND_MEAN" })
+		
+		warnings("Off")
+
+		includedirs({ "%{prj.location}/include/" })
+		filter("system:windows")
+			sysincludedirs({ vulkanSDKPath .. "/Include/" })
+
+		filter("system:linux")
+			sysincludedirs({ vulkanSDKPath .. "/include/" })
+			
+		filter("system:macosx")
+			sysincludedirs({ vulkanSDKPath .. "/include/" })
+		
+		filter({})
+
+		files({
+			"%{prj.location}/include/**",
+			"%{prj.location}/src/VmaUsage.h",
+			"%{prj.location}/src/VmaUsage.cpp"
+		})
+	
+	project("STB")
+		location("ThirdParty/STB/")
+		kind("Utility")
+		
+		warnings("Off")
+
+		includedirs({ "%{prj.location}/include/" })
+
+		files({
+			"%{prj.location}/stb_image.h"
+		})
+	
 	project("PasswordManager")
-		kind("ConsoleApp")
 		location("%{wks.location}/")
 		targetdir("%{wks.location}/Bin/%{cfg.system}-%{cfg.buildcfg}-%{cfg.platform}/")
 		objdir("%{wks.location}/Bin/Int-%{cfg.system}-%{cfg.buildcfg}-%{cfg.platform}/%{prj.name}")
 		debugdir("%{prj.location}/Run/")
+		
+		filter("configurations:Debug")
+			kind("ConsoleApp")
+		
+		filter("configurations:Debug")
+			kind("WindowedApp")
+		
+		filter({})
 		
 		local openSSLLibCryptoPath = path.translate(openSSLLibCryptoPath, "/")
 		local openSSLLibCryptoDir = path.getdirectory(openSSLLibCryptoPath)
@@ -105,12 +246,50 @@ workspace("PasswordManager")
 		
 		libdirs({ path.getdirectory(openSSLLibCryptoPath) })
 		
-		links({ removeOsSpecificLibraryAffixes(path.getname(openSSLLibCryptoPath)) })
-		sysincludedirs({ openSSLInclude })
+		links({
+			"GLFW",
+			"VMA",
+			removeOsSpecificLibraryAffixes(path.getname(openSSLLibCryptoPath))
+		})
+		sysincludedirs({
+			"%{wks.location}/ThirdParty/GLFW/include/",
+			"%{wks.location}/ThirdParty/VMA/include/",
+			"%{wks.location}/ThirdParty/STB/",
+			openSSLInclude
+		})
+		
+		filter("system:windows")
+			libdirs({ vulkanSDKPath .. "/Lib/" })
+			links({
+				"vulkan-1.lib",
+				"glslang.lib"
+			})
+			sysincludedirs({ vulkanSDKPath .. "/Include/" })
+		
+		filter("system:linux")
+			libdirs({ vulkanSDKPath .. "/lib/" })
+			links({
+				"libvulkan.so.1",
+				"libglslang.a"
+			})
+			sysincludedirs({ vulkanSDKPath .. "/include/" })
+		
+		filter("system:macosx")
+			libdirs({ vulkanSDKPath .. "/lib/" })
+			links({
+				"vulkan",
+				"glslang",
+				"CoreGraphics.framework",
+				"IOKit.framework",
+				"AppKit.framework"
+			})
+			sysincludedirs({ vulkanSDKPath .. "/include/" })
+		
+		filter({})
 		
 		includedirs({ "%{prj.location}/Source/" })
 		
-		files({ "%{prj.location}/**" })
+		files({ "%{prj.location}/Source/**" })
 		
 		filter("files:**.h")
 			runclangformat(true)
