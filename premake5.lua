@@ -55,7 +55,7 @@ workspace("PasswordManager")
 	configurations({ "Debug", "Release", "Dist" })
 	platforms({ "x64" }) -- "x86", 
 	
-	cppdialect("C++17")
+	cppdialect("C++20")
 	rtti("Off")
 	exceptionhandling("On")
 	flags("MultiProcessorCompile")
