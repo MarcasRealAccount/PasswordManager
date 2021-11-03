@@ -210,18 +210,6 @@ end
 			"%{prj.location}/src/VmaUsage.cpp"
 		})
 	
-	project("STB")
-		location("ThirdParty/STB/")
-		kind("Utility")
-		
-		warnings("Off")
-
-		includedirs({ "%{prj.location}/include/" })
-
-		files({
-			"%{prj.location}/stb_image.h"
-		})
-	
 	project("PasswordManager")
 		location("%{wks.location}/")
 		targetdir("%{wks.location}/Bin/%{cfg.system}-%{cfg.buildcfg}-%{cfg.platform}/")
