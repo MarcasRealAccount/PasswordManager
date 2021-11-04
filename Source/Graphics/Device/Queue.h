@@ -8,7 +8,7 @@ namespace Graphics {
 
 	struct QueueFamily : public Handle<void*, false, false> {
 	public:
-		QueueFamily(Device& device, std::uint32_t familyIndex, VkQueueFlags queueFlags, std::uint32_t timestampValidBits, VkExtent3D minImageTransferGranularity, bool supportsPresent, std::uint32_t queueCount);
+		QueueFamily(Device& device, std::uint32_t familyIndex, vk::QueueFlags queueFlags, std::uint32_t timestampValidBits, VkExtent3D minImageTransferGranularity, bool supportsPresent, std::uint32_t queueCount);
 		~QueueFamily();
 
 		auto getQueueFlags() const { return m_QueueFlags; }
@@ -26,7 +26,7 @@ namespace Graphics {
 	private:
 		Device& m_Device;
 
-		VkQueueFlags m_QueueFlags;
+		vk::QueueFlags m_QueueFlags;
 		std::uint32_t m_TimestampValidBits;
 		VkExtent3D m_MinImageTransferGranularity;
 		bool m_SupportsPresent;
@@ -35,9 +35,9 @@ namespace Graphics {
 		std::vector<Queue> m_Queues;
 	};
 
-	struct Queue : public Handle<VkQueue, false, false> {
+	struct Queue : public Handle<vk::Queue, false, false> {
 	public:
-		Queue(QueueFamily& queueFamily, std::uint32_t index, VkQueue handle);
+		Queue(QueueFamily& queueFamily, std::uint32_t index, vk::Queue handle);
 		~Queue();
 
 		auto getIndex() const { return m_Index; }

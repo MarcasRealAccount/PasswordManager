@@ -11,7 +11,7 @@ namespace UI {
 
 	void App::run() {
 		createWindow();
-		m_Renderer.init(m_Window);
+		m_Renderer.init(m_Window, 2);
 
 		while (!shouldClose()) {
 			updateWindow();

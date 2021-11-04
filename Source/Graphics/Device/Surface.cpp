@@ -1,8 +1,6 @@
 #include "Surface.h"
 #include "Graphics/Instance.h"
 
-#include <GLFW/glfw3.h>
-
 namespace Graphics {
 	Surface::Surface(Instance& instance)
 	    : m_Instance(instance), m_Window(nullptr) {
@@ -20,13 +18,14 @@ namespace Graphics {
 	}
 
 	void Surface::createImpl() {
-		auto result = glfwCreateWindowSurface(m_Instance, m_Window, nullptr, &m_Handle);
-		if (result != VK_SUCCESS)
-			return;
+		VkSurfaceKHR surface;
+		auto result = glfwCreateWindowSurface(*m_Instance, m_Window, nullptr, &surface);
+		if (result == VK_SUCCESS)
+			m_Handle = surface;
 	}
 
 	bool Surface::destroyImpl() {
-		vkDestroySurfaceKHR(m_Instance, m_Handle, nullptr);
+		m_Instance->destroySurfaceKHR(m_Handle, nullptr);
 		return true;
 	}
 } // namespace Graphics

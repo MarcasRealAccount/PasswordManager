@@ -6,7 +6,7 @@
 
 namespace UI {
 	Renderer::Renderer()
-	    : m_Instance("PasswordManager", { 0, 0, 1, 0 }, "PasswordManager", { 0, 0, 1, 0 }, VK_API_VERSION_1_0, VK_API_VERSION_1_2), m_Debug(m_Instance), m_Surface(m_Instance), m_Device(m_Surface) {
+	    : m_Instance("PasswordManager", { 0, 0, 1, 0 }, "PasswordManager", { 0, 0, 1, 0 }, VK_API_VERSION_1_0, VK_API_VERSION_1_2), m_Debug(m_Instance), m_Surface(m_Instance), m_Device(m_Surface), m_GraphicsPresentQueue(nullptr), m_Vma(m_Device) {
 		m_Instance.setDebug(m_Debug);
 	}
 
@@ -14,7 +14,7 @@ namespace UI {
 		deinit();
 	}
 
-	void Renderer::init(GLFWwindow* window) {
+	void Renderer::init(GLFWwindow* window, std::size_t maxFramesInFlight) {
 		if (m_Initialized)
 			return;
 
@@ -62,10 +62,63 @@ namespace UI {
 			return;
 		}
 
+		m_Device.requestExtension("VK_KHR_swapchain");
+		m_Device.requestExtension("VK_KHR_portability_subset", {}, false);
+
+		m_Device.requestQueueFamily(1, vk::QueueFlagBits::eGraphics, true);
+
 		if (!m_Device.create()) {
 			std::cerr << "Failed to create vulkan device!\n";
 			return;
 		}
+
+		auto graphicsPresentQueueFamily = m_Device.getQueueFamily(vk::QueueFlagBits::eGraphics, true);
+		m_GraphicsPresentQueue          = graphicsPresentQueueFamily->getQueue(0);
+
+		if (!m_Vma.create()) {
+			std::cerr << "Failed to create vulkan memory allocator!\n";
+			return;
+		}
+
+		m_CommandPools.reserve(maxFramesInFlight);
+		m_InFlightFences.reserve(maxFramesInFlight);
+		m_ImageAvailableSemaphores.reserve(maxFramesInFlight);
+		m_RenderFinishedSemaphores.reserve(maxFramesInFlight);
+		for (std::size_t i = 0; i < maxFramesInFlight; ++i) {
+			auto& commandPool = m_CommandPools.emplace_back(m_Device);
+
+			commandPool.setQueueFamily(*graphicsPresentQueueFamily);
+
+			if (!commandPool.create()) {
+				std::cerr << "Failed to create vulkan command pool!\n";
+				return;
+			}
+			m_Device.setDebugName(commandPool, "m_CommandPools[" + std::to_string(i) + "]");
+
+			auto& imageAvailableSemaphore = m_ImageAvailableSemaphores.emplace_back(m_Device);
+			if (!imageAvailableSemaphore.create()) {
+				std::cerr << "Failed to create vulkan semaphore!\n";
+				return;
+			}
+			m_Device.setDebugName(imageAvailableSemaphore, "m_ImageAvailableSemaphores[" + std::to_string(i) + "]");
+
+			auto& renderFinishedSemaphore = m_RenderFinishedSemaphores.emplace_back(m_Device);
+			if (!renderFinishedSemaphore.create()) {
+				std::cerr << "Failed to create vulkan semaphore!\n";
+				return;
+			}
+			m_Device.setDebugName(renderFinishedSemaphore, "m_RenderFinishedSemaphores[" + std::to_string(i) + "]");
+
+			auto& inFlightFence = m_InFlightFences.emplace_back(m_Device);
+			inFlightFence.setSignaled();
+			if (!inFlightFence.create()) {
+				std::cerr << "Failed to create vulkan fence!\n";
+				return;
+			}
+			m_Device.setDebugName(inFlightFence, "m_CommandPools[" + std::to_string(i) + "]");
+		}
+
+		m_Initialized = true;
 	}
 
 	void Renderer::deinit() {
@@ -73,6 +126,7 @@ namespace UI {
 			return;
 
 		m_Instance.destroy();
+		m_Initialized = false;
 	}
 
 	void Renderer::render() {

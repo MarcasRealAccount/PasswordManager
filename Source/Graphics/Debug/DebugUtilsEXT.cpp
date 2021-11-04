@@ -4,7 +4,7 @@
 namespace Graphics::DebugUtilsEXT {
 	template <class FunctionPtr>
 	static FunctionPtr getInstanceFunction(Instance& instance, const char* name) {
-		return reinterpret_cast<FunctionPtr>(vkGetInstanceProcAddr(instance, name));
+		return reinterpret_cast<FunctionPtr>(vkGetInstanceProcAddr(*instance, name));
 	}
 
 	void FunctionPtrs::init(Instance& instance) {

@@ -11,16 +11,10 @@ namespace Graphics {
 		s_Enabled = false;
 	}
 
-	void Debug::PopulateCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
-		createInfo = {
-			VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
-			nullptr,
-			0,
-			VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
-			VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
-			&Debug::DebugCallback,
-			nullptr
-		};
+	void Debug::PopulateCreateInfo(vk::DebugUtilsMessengerCreateInfoEXT& createInfo) {
+		createInfo.messageSeverity = /*vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose | */ vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
+		createInfo.messageType     = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance;
+		createInfo.pfnUserCallback = &Debug::DebugCallback;
 	}
 
 	std::string Debug::GetSeverity(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity) {
@@ -85,15 +79,20 @@ namespace Graphics {
 	}
 
 	void Debug::createImpl() {
-		VkDebugUtilsMessengerCreateInfoEXT createInfo;
+		vk::DebugUtilsMessengerCreateInfoEXT createInfo;
 		PopulateCreateInfo(createInfo);
 		m_DebugUtilsEXT.init(m_Instance);
 
-		m_DebugUtilsEXT.vkCreateDebugUtilsMessengerEXT(m_Instance, &createInfo, nullptr, &m_Handle);
+		VkDebugUtilsMessengerCreateInfoEXT vkCreateInfo = createInfo;
+
+		VkDebugUtilsMessengerEXT debugUtilsMesenger;
+		auto result = m_DebugUtilsEXT.vkCreateDebugUtilsMessengerEXT(*m_Instance, &vkCreateInfo, nullptr, &debugUtilsMesenger);
+		if (result == VK_SUCCESS)
+			m_Handle = debugUtilsMesenger;
 	}
 
 	bool Debug::destroyImpl() {
-		m_DebugUtilsEXT.vkDestroyDebugUtilsMessengerEXT(m_Instance, m_Handle, nullptr);
+		m_DebugUtilsEXT.vkDestroyDebugUtilsMessengerEXT(*m_Instance, m_Handle, nullptr);
 		return true;
 	}
 } // namespace Graphics

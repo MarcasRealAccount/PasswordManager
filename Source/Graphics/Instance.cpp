@@ -16,8 +16,8 @@ namespace Graphics {
 	Version Instance::GetVulkanVersion() {
 		if (!s_CachedVersion) {
 			if (vkGetInstanceProcAddr(nullptr, "vkEnumerateInstanceVersion")) {
-				auto result = vkEnumerateInstanceVersion(&s_CachedVersion.m_Version);
-				if (result != VK_SUCCESS)
+				auto result = vk::enumerateInstanceVersion(&s_CachedVersion.m_Version);
+				if (result != vk::Result::eSuccess)
 					s_CachedVersion = {};
 			} else {
 				s_CachedVersion = VK_API_VERSION_1_0;
@@ -29,16 +29,12 @@ namespace Graphics {
 	const Instance::Layers& Instance::GetAvailableLayers(bool requery) {
 		if (requery || s_CachedAvailableLayers.empty()) {
 			s_CachedAvailableLayers.clear();
-			std::uint32_t propertyCount;
-			vkEnumerateInstanceLayerProperties(&propertyCount, nullptr);
-			std::vector<VkLayerProperties> properties(propertyCount);
-			vkEnumerateInstanceLayerProperties(&propertyCount, properties.data());
 
-			s_CachedAvailableLayers.reserve(propertyCount);
-			for (std::size_t i = 0; i < propertyCount; ++i) {
-				auto& property = properties[i];
+			std::vector<vk::LayerProperties> properties = vk::enumerateInstanceLayerProperties();
+
+			s_CachedAvailableLayers.reserve(properties.size());
+			for (auto& property : properties)
 				s_CachedAvailableLayers.emplace_back(std::string_view { property.layerName, std::strlen(property.layerName) }, property.implementationVersion);
-			}
 		}
 		return s_CachedAvailableLayers;
 	}
@@ -46,16 +42,11 @@ namespace Graphics {
 	const Instance::Extensions& Instance::GetAvailableExtensions(bool requery) {
 		if (requery || s_CachedAvailableExtensions.empty()) {
 			s_CachedAvailableExtensions.clear();
-			std::uint32_t propertyCount;
-			vkEnumerateInstanceExtensionProperties(nullptr, &propertyCount, nullptr);
-			std::vector<VkExtensionProperties> properties(propertyCount);
-			vkEnumerateInstanceExtensionProperties(nullptr, &propertyCount, properties.data());
+			std::vector<vk::ExtensionProperties> properties = vk::enumerateInstanceExtensionProperties();
 
-			s_CachedAvailableExtensions.reserve(propertyCount);
-			for (std::size_t i = 0; i < propertyCount; ++i) {
-				auto& property = properties[i];
+			s_CachedAvailableExtensions.reserve(properties.size());
+			for (auto& property : properties)
 				s_CachedAvailableExtensions.emplace_back(std::string_view { property.extensionName, std::strlen(property.extensionName) }, property.specVersion);
-			}
 		}
 		return s_CachedAvailableLayers;
 	}
@@ -218,24 +209,23 @@ namespace Graphics {
 			useExtensions[i] = extension.m_Name.c_str();
 		}
 
-		VkApplicationInfo appInfo = { VK_STRUCTURE_TYPE_APPLICATION_INFO, nullptr, m_AppName.c_str(), m_AppVersion, m_EngineName.c_str(), m_EngineVersion, instanceVersion };
+		vk::ApplicationInfo appInfo       = { m_AppName.c_str(), m_AppVersion, m_EngineName.c_str(), m_EngineVersion, instanceVersion };
+		vk::InstanceCreateInfo createInfo = { {}, &appInfo, useLayers, useExtensions };
 
-		VkInstanceCreateInfo createInfo = { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, nullptr, 0, &appInfo, static_cast<std::uint32_t>(useLayers.size()), useLayers.data(), static_cast<std::uint32_t>(useExtensions.size()), useExtensions.data() };
-
-		VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
+		vk::DebugUtilsMessengerCreateInfoEXT debugCreateInfo;
 
 		if (Debug::IsEnabled()) {
 			Debug::PopulateCreateInfo(debugCreateInfo);
 			createInfo.pNext = &debugCreateInfo;
 		}
 
-		auto result = vkCreateInstance(&createInfo, nullptr, &m_Handle);
-		if (result == VK_SUCCESS)
+		auto result = vk::createInstance(&createInfo, nullptr, &m_Handle);
+		if (result == vk::Result::eSuccess)
 			m_ApiVersion = instanceVersion;
 	}
 
 	bool Instance::destroyImpl() {
-		vkDestroyInstance(m_Handle, nullptr);
+		m_Handle.destroy();
 		m_EnabledLayers.clear();
 		m_EnabledExtensions.clear();
 		m_ApiVersion = {};

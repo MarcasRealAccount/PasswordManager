@@ -8,11 +8,11 @@
 namespace Graphics {
 	struct Instance;
 
-	struct Debug : public Handle<VkDebugUtilsMessengerEXT, true, false> {
+	struct Debug : public Handle<vk::DebugUtilsMessengerEXT, true, false> {
 	public:
 		static void Disable();
 		static auto IsEnabled() { return s_Enabled; }
-		static void PopulateCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
+		static void PopulateCreateInfo(vk::DebugUtilsMessengerCreateInfoEXT& createInfo);
 
 	private:
 		static std::string GetSeverity(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity);

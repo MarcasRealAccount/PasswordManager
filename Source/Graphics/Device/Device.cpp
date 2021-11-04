@@ -11,7 +11,7 @@ namespace Graphics {
 		DeviceLayer::DeviceLayer(std::string_view name, Version version, bool required)
 		    : m_Name(name), m_Version(version), m_Required(required) { }
 
-		DeviceQueueFamilyRequest::DeviceQueueFamilyRequest(std::uint32_t count, VkQueueFlags queueFlags, bool supportsPresent, bool required)
+		DeviceQueueFamilyRequest::DeviceQueueFamilyRequest(std::uint32_t count, vk::QueueFlags queueFlags, bool supportsPresent, bool required)
 		    : m_Count(count), m_QueueFlags(queueFlags), m_SupportsPresent(supportsPresent), m_Required(required) { }
 	} // namespace Detail
 
@@ -60,7 +60,7 @@ namespace Graphics {
 		}
 	}
 
-	void Device::requestQueueFamily(std::uint32_t count, VkQueueFlags queueFlags, bool supportsPresent, bool required) {
+	void Device::requestQueueFamily(std::uint32_t count, vk::QueueFlags queueFlags, bool supportsPresent, bool required) {
 		m_QueueRequests.emplace_back(count, queueFlags, supportsPresent, required);
 	}
 
@@ -78,20 +78,32 @@ namespace Graphics {
 		return {};
 	}
 
-	QueueFamily* Device::getQueueFamily(VkQueueFlags queueFlags, bool supportsPresent) const {
+	QueueFamily* Device::getQueueFamily(vk::QueueFlags queueFlags, bool supportsPresent) const {
 		for (auto& queueFamily : m_QueueFamilies)
 			if ((queueFamily.getQueueFlags() & queueFlags) && (queueFamily.isPresentSupported() >= supportsPresent))
 				return const_cast<QueueFamily*>(&queueFamily);
 		return nullptr;
 	}
 
+	Instance& Device::getInstance() {
+		return m_Surface.getInstance();
+	}
+
+	Instance& Device::getInstance() const {
+		return m_Surface.getInstance();
+	}
+
+	Debug& Device::getDebug() {
+		return getInstance().getDebug();
+	}
+
+	Debug& Device::getDebug() const {
+		return getInstance().getDebug();
+	}
+
 	void Device::createImpl() {
-		auto& instance = m_Surface.getInstance();
-		std::uint32_t physicalDeviceCount;
-		vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr);
-		std::vector<VkPhysicalDevice> physicalDevices(physicalDeviceCount);
-		vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, physicalDevices.data());
-		physicalDevices.resize(physicalDeviceCount);
+		auto& instance                                  = m_Surface.getInstance();
+		std::vector<vk::PhysicalDevice> physicalDevices = instance->enumeratePhysicalDevices();
 
 		VkPhysicalDevice bestPhysicalDevice = nullptr;
 		std::size_t bestScore               = 0;
@@ -103,16 +115,10 @@ namespace Graphics {
 			bool missingExtensions = false;
 			bool missingQueue      = false;
 
-			std::uint32_t layerCount;
-			vkEnumerateDeviceLayerProperties(physicalDevice, &layerCount, nullptr);
-			std::vector<VkLayerProperties> availableLayers(layerCount);
-			vkEnumerateDeviceLayerProperties(physicalDevice, &layerCount, availableLayers.data());
-			availableLayers.resize(layerCount);
+			std::vector<vk::LayerProperties> availableLayers = physicalDevice.enumerateDeviceLayerProperties();
 			for (auto& layer : m_Layers) {
 				bool found = false;
-				for (std::size_t i = 0; i < layerCount; ++i) {
-					auto& availLayer = availableLayers[i];
-
+				for (auto& availLayer : availableLayers) {
 					std::string_view layerName = { availLayer.layerName, std::strlen(availLayer.layerName) };
 
 					if (layerName == layer.m_Name && availLayer.implementationVersion >= layer.m_Version) {
@@ -132,15 +138,10 @@ namespace Graphics {
 			if (missingLayers)
 				continue;
 
-			std::uint32_t extensionCount;
-			vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, nullptr);
-			std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-			vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, availableExtensions.data());
+			std::vector<vk::ExtensionProperties> availableExtensions = physicalDevice.enumerateDeviceExtensionProperties();
 			for (auto& extension : m_Extensions) {
 				bool found = false;
-				for (std::size_t i = 0; i < extensionCount; ++i) {
-					auto& availExtension = availableExtensions[i];
-
+				for (auto& availExtension : availableExtensions) {
 					std::string_view extensionName = { availExtension.extensionName, std::strlen(availExtension.extensionName) };
 
 					if (extensionName == extension.m_Name && availExtension.specVersion >= extension.m_Version) {
@@ -160,21 +161,14 @@ namespace Graphics {
 			if (missingExtensions)
 				continue;
 
-			std::uint32_t queueFamilyCount;
-			vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
-			std::vector<VkQueueFamilyProperties> queueFamilyProperties(queueFamilyCount);
-			vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilyProperties.data());
+			std::vector<vk::QueueFamilyProperties> queueFamilyProperties = physicalDevice.getQueueFamilyProperties();
 			for (auto& queueRequest : m_QueueRequests) {
-				bool found = false;
-				for (std::uint32_t i = 0; i < queueFamilyCount; ++i) {
-					auto& queueFamilyProperty = queueFamilyProperties[i];
-
+				bool found      = false;
+				std::uint32_t i = 0;
+				for (auto& queueFamilyProperty : queueFamilyProperties) {
 					bool eval = (queueFamilyProperty.queueFlags & queueRequest.m_QueueFlags) && queueFamilyProperty.queueCount >= queueRequest.m_Count;
-					if (queueRequest.m_SupportsPresent) {
-						VkBool32 supported;
-						vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, m_Surface, &supported);
-						eval = eval && supported;
-					}
+					if (queueRequest.m_SupportsPresent)
+						eval = eval && physicalDevice.getSurfaceSupportKHR(i, *m_Surface);
 
 					if (eval) {
 						if (!queueRequest.m_Required)
@@ -182,6 +176,8 @@ namespace Graphics {
 						found = true;
 						break;
 					}
+
+					++i;
 				}
 				if (found)
 					continue;
@@ -193,24 +189,22 @@ namespace Graphics {
 			if (missingQueue)
 				continue;
 
-			VkPhysicalDeviceProperties properties;
-			vkGetPhysicalDeviceProperties(physicalDevice, &properties);
-			VkPhysicalDeviceFeatures features;
-			vkGetPhysicalDeviceFeatures(physicalDevice, &features);
+			vk::PhysicalDeviceProperties properties              = physicalDevice.getProperties();
+			[[maybe_unused]] vk::PhysicalDeviceFeatures features = physicalDevice.getFeatures();
 
 			switch (properties.deviceType) {
-			case VK_PHYSICAL_DEVICE_TYPE_CPU:
+			case vk::PhysicalDeviceType::eCpu:
 				break;
-			case VK_PHYSICAL_DEVICE_TYPE_OTHER:
+			case vk::PhysicalDeviceType::eOther:
 				score *= 2;
 				break;
-			case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+			case vk::PhysicalDeviceType::eVirtualGpu:
 				score *= 3;
 				break;
-			case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+			case vk::PhysicalDeviceType::eIntegratedGpu:
 				score *= 4;
 				break;
-			case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+			case vk::PhysicalDeviceType::eDiscreteGpu:
 				score *= 5;
 				break;
 			default:
@@ -228,15 +222,9 @@ namespace Graphics {
 
 		m_PhysicalDevice = bestPhysicalDevice;
 
-		std::uint32_t layerCount;
-		vkEnumerateDeviceLayerProperties(m_PhysicalDevice, &layerCount, nullptr);
-		std::vector<VkLayerProperties> availableLayers(layerCount);
-		vkEnumerateDeviceLayerProperties(m_PhysicalDevice, &layerCount, availableLayers.data());
-		availableLayers.resize(layerCount);
+		std::vector<vk::LayerProperties> availableLayers = m_PhysicalDevice.enumerateDeviceLayerProperties();
 		for (auto& layer : m_Layers) {
-			for (std::size_t i = 0; i < layerCount; ++i) {
-				auto& availLayer = availableLayers[i];
-
+			for (auto& availLayer : availableLayers) {
 				std::string_view layerName = { availLayer.layerName, std::strlen(availLayer.layerName) };
 
 				if (layerName == layer.m_Name && availLayer.implementationVersion >= layer.m_Version) {
@@ -246,14 +234,9 @@ namespace Graphics {
 			}
 		}
 
-		std::uint32_t extensionCount;
-		vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &extensionCount, nullptr);
-		std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-		vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &extensionCount, availableExtensions.data());
+		std::vector<vk::ExtensionProperties> availableExtensions = m_PhysicalDevice.enumerateDeviceExtensionProperties();
 		for (auto& extension : m_Extensions) {
-			for (std::size_t i = 0; i < extensionCount; ++i) {
-				auto& availExtension = availableExtensions[i];
-
+			for (auto& availExtension : availableExtensions) {
 				std::string_view extensionName = { availExtension.extensionName, std::strlen(availExtension.extensionName) };
 
 				if (extensionName == extension.m_Name && availExtension.specVersion >= extension.m_Version) {
@@ -275,20 +258,13 @@ namespace Graphics {
 
 		std::map<std::uint32_t, std::uint32_t> uniqueQueueFamilyIndices;
 
-		std::uint32_t queueFamilyCount;
-		vkGetPhysicalDeviceQueueFamilyProperties(m_PhysicalDevice, &queueFamilyCount, nullptr);
-		std::vector<VkQueueFamilyProperties> queueFamilyProperties(queueFamilyCount);
-		vkGetPhysicalDeviceQueueFamilyProperties(m_PhysicalDevice, &queueFamilyCount, queueFamilyProperties.data());
+		std::vector<vk::QueueFamilyProperties> queueFamilyProperties = m_PhysicalDevice.getQueueFamilyProperties();
 		for (auto& queueRequest : m_QueueRequests) {
-			for (std::uint32_t i = 0; i < queueFamilyCount; ++i) {
-				auto& queueFamilyProperty = queueFamilyProperties[i];
-
+			std::uint32_t i = 0;
+			for (auto& queueFamilyProperty : queueFamilyProperties) {
 				bool eval = (queueFamilyProperty.queueFlags & queueRequest.m_QueueFlags) && queueFamilyProperty.queueCount >= queueRequest.m_Count;
-				if (queueRequest.m_SupportsPresent) {
-					VkBool32 supported;
-					vkGetPhysicalDeviceSurfaceSupportKHR(m_PhysicalDevice, i, m_Surface, &supported);
-					eval = eval && supported;
-				}
+				if (queueRequest.m_SupportsPresent)
+					eval = eval && m_PhysicalDevice.getSurfaceSupportKHR(i, *m_Surface);
 
 				if (eval) {
 					auto itr = uniqueQueueFamilyIndices.find(i);
@@ -298,11 +274,13 @@ namespace Graphics {
 						itr->second = queueRequest.m_Count;
 					break;
 				}
+
+				++i;
 			}
 		}
 
 		std::vector<std::vector<float>> queueProperties(uniqueQueueFamilyIndices.size());
-		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos(uniqueQueueFamilyIndices.size());
+		std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos(uniqueQueueFamilyIndices.size());
 
 		{
 			std::size_t i = 0;
@@ -315,11 +293,11 @@ namespace Graphics {
 					queueProperty[j] = 1.0f;
 
 				auto& queueCreateInfo = queueCreateInfos[i];
-				queueCreateInfo       = { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO, nullptr, 0, familyIndex, queueCount, queueProperty.data() };
+				queueCreateInfo       = { {}, familyIndex, queueProperty };
 			}
 		}
 
-		VkPhysicalDeviceFeatures enabledFeatures;
+		vk::PhysicalDeviceFeatures enabledFeatures;
 
 		std::vector<const char*> useLayers(m_EnabledLayers.size());
 		std::vector<const char*> useExtensions(m_EnabledExtensions.size());
@@ -334,26 +312,23 @@ namespace Graphics {
 			useExtensions[i] = extension.m_Name.c_str();
 		}
 
-		VkDeviceCreateInfo createInfo = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO, nullptr, 0, static_cast<std::uint32_t>(queueCreateInfos.size()), queueCreateInfos.data(), static_cast<std::uint32_t>(useLayers.size()), useLayers.data(), static_cast<std::uint32_t>(useExtensions.size()), useExtensions.data(), &enabledFeatures };
+		vk::DeviceCreateInfo createInfo = { {}, queueCreateInfos, useLayers, useExtensions, &enabledFeatures };
 
-		auto result = vkCreateDevice(m_PhysicalDevice, &createInfo, nullptr, &m_Handle);
-		if (result == VK_SUCCESS) {
+		auto result = m_PhysicalDevice.createDevice(&createInfo, nullptr, &m_Handle);
+		if (result == vk::Result::eSuccess) {
 			m_QueueFamilies.reserve(uniqueQueueFamilyIndices.size());
 			for (auto itr = uniqueQueueFamilyIndices.begin(); itr != uniqueQueueFamilyIndices.end(); ++itr) {
 				auto [familyIndex, queueCount] = *itr;
 
 				auto& queueFamilyProperty = queueFamilyProperties[familyIndex];
 
-				VkBool32 presentSupport;
-				vkGetPhysicalDeviceSurfaceSupportKHR(m_PhysicalDevice, familyIndex, m_Surface, &presentSupport);
-
-				m_QueueFamilies.emplace_back(*this, familyIndex, queueFamilyProperty.queueFlags, queueFamilyProperty.timestampValidBits, queueFamilyProperty.minImageTransferGranularity, presentSupport, queueCount);
+				m_QueueFamilies.emplace_back(*this, familyIndex, queueFamilyProperty.queueFlags, queueFamilyProperty.timestampValidBits, queueFamilyProperty.minImageTransferGranularity, m_PhysicalDevice.getSurfaceSupportKHR(familyIndex, *m_Surface), queueCount);
 			}
 		}
 	}
 
 	bool Device::destroyImpl() {
-		vkDestroyDevice(m_Handle, nullptr);
+		m_Handle.destroy();
 		m_EnabledLayers.clear();
 		m_EnabledExtensions.clear();
 		m_QueueFamilies.clear();

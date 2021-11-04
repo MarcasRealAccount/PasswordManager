@@ -2,9 +2,9 @@
 #include "DataStore/DataStore.h"
 #include "UI/UI.h"
 
-//std::vector<std::uint8_t> stringToVector(std::string_view string) {
+// std::vector<std::uint8_t> stringToVector(std::string_view string) {
 //	return std::vector<std::uint8_t>(string.begin(), string.end());
-//}
+// }
 
 int main() {
 	UI::App app;

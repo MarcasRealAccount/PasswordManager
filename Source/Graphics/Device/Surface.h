@@ -2,12 +2,10 @@
 
 #include "Graphics/Common.h"
 
-struct GLFWwindow;
-
 namespace Graphics {
 	struct Instance;
 
-	struct Surface : public Handle<VkSurfaceKHR, true, false> {
+	struct Surface : public Handle<vk::SurfaceKHR, true, false> {
 	public:
 		Surface(Instance& instance);
 		~Surface();

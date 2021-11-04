@@ -23,6 +23,8 @@ namespace Graphics {
 			HandleBase()          = default;
 			virtual ~HandleBase() = default;
 
+			virtual std::string_view getDebugName() = 0;
+
 			virtual bool create()  = 0;
 			virtual void destroy() = 0;
 
@@ -68,17 +70,19 @@ namespace Graphics {
 		template <class T, bool IsDestroyable, bool IsDebuggable, bool IsValid>
 		struct Handle;
 
-		template <class T, bool IsDebuggable>
-		struct Handle<T, true, IsDebuggable, true> : public HandleStorage<T> {
+		template <class T>
+		struct Handle<T, true, false, true> : public HandleStorage<T> {
 		public:
 			using HandleT                    = T;
 			using Base                       = HandleStorage<T>;
-			static constexpr bool Debuggable = IsDebuggable;
+			static constexpr bool Debuggable = false;
 
 		public:
 			Handle() : Base(), m_Created(false), m_Destroyable(true) { }
 			Handle(const T& handle) : Base(handle), m_Created(true), m_Destroyable(false) { }
 			Handle(T&& handle) : Base(std::move(handle)), m_Created(true), m_Destroyable(false) { }
+
+			virtual std::string_view getDebugName() override { return nullptr; }
 
 			virtual bool create() override;
 			virtual void destroy() override;
@@ -95,22 +99,79 @@ namespace Graphics {
 			bool m_Destroyable;
 		};
 
-		template <class T, bool IsDebuggable>
-		struct Handle<T, false, IsDebuggable, true> : public HandleStorage<T> {
+		template <class T>
+		struct Handle<T, true, true, true> : public HandleStorage<T> {
 		public:
 			using HandleT                    = T;
 			using Base                       = HandleStorage<T>;
-			static constexpr bool Debuggable = IsDebuggable;
+			static constexpr bool Debuggable = true;
+
+		public:
+			Handle() : Base(), m_Created(false), m_Destroyable(true) { }
+			Handle(const T& handle) : Base(handle), m_Created(true), m_Destroyable(false) { }
+			Handle(T&& handle) : Base(std::move(handle)), m_Created(true), m_Destroyable(false) { }
+
+			void setDebugName(std::string_view name) { m_DebugName = name; }
+			virtual std::string_view getDebugName() override { return m_DebugName; }
+
+			virtual bool create() override;
+			virtual void destroy() override;
+
+			virtual bool isCreated() const override { return m_Created; }
+			virtual bool isDestroyable() const override { return m_Destroyable; }
+
+		private:
+			virtual void createImpl()  = 0;
+			virtual bool destroyImpl() = 0;
+
+		private:
+			bool m_Created;
+			bool m_Destroyable;
+			std::string m_DebugName;
+		};
+
+		template <class T>
+		struct Handle<T, false, false, true> : public HandleStorage<T> {
+		public:
+			using HandleT                    = T;
+			using Base                       = HandleStorage<T>;
+			static constexpr bool Debuggable = false;
 
 		public:
 			Handle(const T& handle) : Base(handle) { }
 			Handle(T&& handle) : Base(std::move(handle)) { }
+
+			virtual std::string_view getDebugName() override { return nullptr; }
 
 			virtual bool create() override;
 			virtual void destroy() override;
 
 			virtual bool isCreated() const override { return true; }
 			virtual bool isDestroyable() const override { return false; }
+		};
+
+		template <class T>
+		struct Handle<T, false, true, true> : public HandleStorage<T> {
+		public:
+			using HandleT                    = T;
+			using Base                       = HandleStorage<T>;
+			static constexpr bool Debuggable = true;
+
+		public:
+			Handle(const T& handle) : Base(handle) { }
+			Handle(T&& handle) : Base(std::move(handle)) { }
+
+			void setDebugName(std::string_view name) { m_DebugName = name; }
+			virtual std::string_view getDebugName() override { return m_DebugName; }
+
+			virtual bool create() override;
+			virtual void destroy() override;
+
+			virtual bool isCreated() const override { return true; }
+			virtual bool isDestroyable() const override { return false; }
+
+		private:
+			std::string m_DebugName;
 		};
 	} // namespace Detail
 
@@ -119,8 +180,8 @@ namespace Graphics {
 } // namespace Graphics
 
 namespace Graphics::Detail {
-	template <class T, bool IsDebuggable>
-	bool Handle<T, true, IsDebuggable, true>::create() {
+	template <class T>
+	bool Handle<T, true, false, true>::create() {
 		bool pCreated = m_Created;
 		if (pCreated) {
 			Base::m_Recreate = true;
@@ -138,8 +199,27 @@ namespace Graphics::Detail {
 		return m_Created;
 	}
 
-	template <class T, bool IsDebuggable>
-	void Handle<T, true, IsDebuggable, true>::destroy() {
+	template <class T>
+	bool Handle<T, true, true, true>::create() {
+		bool pCreated = m_Created;
+		if (pCreated) {
+			Base::m_Recreate = true;
+			destroy();
+		}
+
+		createImpl();
+		m_Created = Base::isValid();
+		if (pCreated && m_Created) {
+			for (auto& child : Base::m_DestroyedChildren)
+				child->create();
+			Base::m_DestroyedChildren.clear();
+		}
+		Base::m_Recreate = false;
+		return m_Created;
+	}
+
+	template <class T>
+	void Handle<T, true, false, true>::destroy() {
 		if (Base::m_Recreate)
 			Base::m_DestroyedChildren.clear();
 
@@ -160,8 +240,30 @@ namespace Graphics::Detail {
 		Base::m_ChildItr = 0;
 	}
 
-	template <class T, bool IsDebuggable>
-	bool Handle<T, false, IsDebuggable, true>::create() {
+	template <class T>
+	void Handle<T, true, true, true>::destroy() {
+		if (Base::m_Recreate)
+			Base::m_DestroyedChildren.clear();
+
+		for (Base::m_ChildItr = 0; Base::m_ChildItr < Base::m_Children.size(); ++Base::m_ChildItr) {
+			auto child = Base::m_Children[Base::m_ChildItr];
+
+			if (child->isValid()) {
+				child->destroy();
+
+				if (Base::m_Recreate && child->isDestroyable())
+					Base::m_DestroyedChildren.push_back(child);
+			}
+		}
+
+		if (m_Destroyable && isCreated() && destroyImpl())
+			Base::m_Handle = nullptr;
+		m_Created        = false;
+		Base::m_ChildItr = 0;
+	}
+
+	template <class T>
+	bool Handle<T, false, false, true>::create() {
 		Base::m_Recreate = true;
 		destroy();
 
@@ -173,8 +275,39 @@ namespace Graphics::Detail {
 		return true;
 	}
 
-	template <class T, bool IsDebuggable>
-	void Handle<T, false, IsDebuggable, true>::destroy() {
+	template <class T>
+	bool Handle<T, false, true, true>::create() {
+		Base::m_Recreate = true;
+		destroy();
+
+		for (auto& child : Base::m_DestroyedChildren)
+			child->create();
+		Base::m_DestroyedChildren.clear();
+
+		Base::m_Recreate = false;
+		return true;
+	}
+
+	template <class T>
+	void Handle<T, false, false, true>::destroy() {
+		Base::m_DestroyedChildren.clear();
+
+		for (Base::m_ChildItr = 0; Base::m_ChildItr < Base::m_Children.size(); ++Base::m_ChildItr) {
+			auto child = Base::m_Children[Base::m_ChildItr];
+
+			if (child->isValid()) {
+				child->destroy();
+
+				if (child->isDestroyable())
+					Base::m_DestroyedChildren.push_back(child);
+			}
+		}
+
+		Base::m_ChildItr = 0;
+	}
+
+	template <class T>
+	void Handle<T, false, true, true>::destroy() {
 		Base::m_DestroyedChildren.clear();
 
 		for (Base::m_ChildItr = 0; Base::m_ChildItr < Base::m_Children.size(); ++Base::m_ChildItr) {

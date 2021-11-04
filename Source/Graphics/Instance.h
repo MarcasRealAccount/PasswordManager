@@ -22,7 +22,7 @@ namespace Graphics {
 
 	struct Debug;
 
-	struct Instance : public Handle<VkInstance, true, false> {
+	struct Instance : public Handle<vk::Instance, true, false> {
 	public:
 		using Layers     = std::vector<Detail::InstanceLayer>;
 		using Extensions = std::vector<Detail::InstanceExtension>;
@@ -56,7 +56,7 @@ namespace Graphics {
 		bool isLayerEnabled(std::string_view name) const { return getLayerVersion(name); }
 		bool isExtensionEnabled(std::string_view name) const { return getExtensionVersion(name); }
 
-		auto getApiVersin() const { return m_ApiVersion; }
+		auto getApiVersion() const { return m_ApiVersion; }
 
 		auto& getEnabledLayers() const { return m_EnabledLayers; }
 		auto& getEnabledExtensions() const { return m_EnabledExtensions; }
