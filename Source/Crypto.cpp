@@ -206,7 +206,7 @@ namespace Crypto {
 				std::uint8_t c = secret[i + j];
 				std::uint8_t d = 0;
 				if (c >= 'a' && c <= 'z')
-					c = c += 'A' - 'a';
+					c = c + 'A' - 'a';
 
 				if (c >= 'A' && c <= 'Z') {
 					d = c - 'A';
@@ -243,6 +243,8 @@ namespace Crypto {
 	}
 
 	void getTOTP(Key* key, std::uint64_t time, std::uint64_t interval, std::uint64_t digits, std::string& output) {
+		// Based on https://github.com/alex14fr/mini_totp_client Thanks ;)
+
 		if (!key || digits < 6 || digits > 10)
 			return;
 

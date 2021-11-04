@@ -6,7 +6,7 @@
 
 namespace UI {
 	Renderer::Renderer()
-	    : m_Instance("PasswordManager", { 0, 0, 1, 0 }, "PasswordManager", { 0, 0, 1, 0 }, VK_API_VERSION_1_0, VK_API_VERSION_1_2), m_Debug(m_Instance) {
+	    : m_Instance("PasswordManager", { 0, 0, 1, 0 }, "PasswordManager", { 0, 0, 1, 0 }, VK_API_VERSION_1_0, VK_API_VERSION_1_2), m_Debug(m_Instance), m_Surface(m_Instance), m_Device(m_Surface) {
 		m_Instance.setDebug(m_Debug);
 	}
 
@@ -48,12 +48,24 @@ namespace UI {
 				std::cerr << str.str();
 			} else {
 				std::cerr << "Failed to create vulkan instance!\n";
-				return;
 			}
+			return;
 		}
 
 		if (Graphics::Debug::IsEnabled())
 			m_Debug.create();
+
+		m_Surface.setWindow(window);
+
+		if (!m_Surface.create()) {
+			std::cerr << "Failed to create vulkan surface!\n";
+			return;
+		}
+
+		if (!m_Device.create()) {
+			std::cerr << "Failed to create vulkan device!\n";
+			return;
+		}
 	}
 
 	void Renderer::deinit() {

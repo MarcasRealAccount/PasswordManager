@@ -24,20 +24,20 @@ namespace Graphics {
 
 	struct Instance : public Handle<VkInstance, true, false> {
 	public:
-		using InstanceLayers     = std::vector<Detail::InstanceLayer>;
-		using InstanceExtensions = std::vector<Detail::InstanceExtension>;
+		using Layers     = std::vector<Detail::InstanceLayer>;
+		using Extensions = std::vector<Detail::InstanceExtension>;
 
 	public:
 		static Version GetVulkanVersion();
-		static const InstanceLayers& GetAvailableLayers(bool requery = false);
-		static const InstanceExtensions& GetAvailableExtensions(bool requery = false);
+		static const Layers& GetAvailableLayers(bool requery = false);
+		static const Extensions& GetAvailableExtensions(bool requery = false);
 		static bool HasLayer(std::string_view name, Version lowestVersion = {});
 		static bool HasExtension(std::string_view name, Version lowestVersion = {});
 
 	private:
 		static Version s_CachedVersion;
-		static InstanceLayers s_CachedAvailableLayers;
-		static InstanceExtensions s_CachedAvailableExtensions;
+		static Layers s_CachedAvailableLayers;
+		static Extensions s_CachedAvailableExtensions;
 
 	public:
 		Instance(std::string_view appName, Version appVersion, std::string_view engineName, Version engineVersion, Version minAPIVersion = {}, Version maxAPIVersion = { ~0U });
@@ -76,19 +76,19 @@ namespace Graphics {
 		Version m_MinAPIVersion;
 		Version m_MaxAPIVersion;
 
-		InstanceLayers m_Layers;
-		InstanceExtensions m_Extensions;
+		Layers m_Layers;
+		Extensions m_Extensions;
 
 	protected:
 		Version m_ApiVersion;
 
-		InstanceLayers m_EnabledLayers;
-		InstanceExtensions m_EnabledExtensions;
+		Layers m_EnabledLayers;
+		Extensions m_EnabledExtensions;
 
 	private:
 		Debug* m_Debug = nullptr;
 
-		InstanceLayers m_MissingLayers;
-		InstanceExtensions m_MissingExtensions;
+		Layers m_MissingLayers;
+		Extensions m_MissingExtensions;
 	};
 } // namespace Graphics

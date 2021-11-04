@@ -3,6 +3,8 @@
 #include "Core.h"
 
 #include "Graphics/Debug/Debug.h"
+#include "Graphics/Device/Device.h"
+#include "Graphics/Device/Surface.h"
 #include "Graphics/Instance.h"
 
 struct GLFWwindow;
@@ -27,5 +29,7 @@ namespace UI {
 		bool m_Initialized = false;
 		Graphics::Instance m_Instance;
 		Graphics::Debug m_Debug;
+		Graphics::Surface m_Surface;
+		Graphics::Device m_Device;
 	};
 } // namespace UI

@@ -10,8 +10,8 @@ namespace Graphics {
 	} // namespace Detail
 
 	Version Instance::s_CachedVersion;
-	Instance::InstanceLayers Instance::s_CachedAvailableLayers;
-	Instance::InstanceExtensions Instance::s_CachedAvailableExtensions;
+	Instance::Layers Instance::s_CachedAvailableLayers;
+	Instance::Extensions Instance::s_CachedAvailableExtensions;
 
 	Version Instance::GetVulkanVersion() {
 		if (!s_CachedVersion) {
@@ -26,7 +26,7 @@ namespace Graphics {
 		return s_CachedVersion;
 	}
 
-	const Instance::InstanceLayers& Instance::GetAvailableLayers(bool requery) {
+	const Instance::Layers& Instance::GetAvailableLayers(bool requery) {
 		if (requery || s_CachedAvailableLayers.empty()) {
 			s_CachedAvailableLayers.clear();
 			std::uint32_t propertyCount;
@@ -37,14 +37,13 @@ namespace Graphics {
 			s_CachedAvailableLayers.reserve(propertyCount);
 			for (std::size_t i = 0; i < propertyCount; ++i) {
 				auto& property = properties[i];
-				std::string layerName(property.layerName, property.layerName + std::strlen(property.layerName));
 				s_CachedAvailableLayers.emplace_back(std::string_view { property.layerName, std::strlen(property.layerName) }, property.implementationVersion);
 			}
 		}
 		return s_CachedAvailableLayers;
 	}
 
-	const Instance::InstanceExtensions& Instance::GetAvailableExtensions(bool requery) {
+	const Instance::Extensions& Instance::GetAvailableExtensions(bool requery) {
 		if (requery || s_CachedAvailableExtensions.empty()) {
 			s_CachedAvailableExtensions.clear();
 			std::uint32_t propertyCount;
@@ -210,17 +209,13 @@ namespace Graphics {
 		std::vector<const char*> useExtensions(m_EnabledExtensions.size());
 
 		for (std::size_t i = 0; i < useLayers.size(); ++i) {
-			auto& layer = m_EnabledLayers[i];
-			char* buf   = new char[layer.m_Name.size() + 1] { 0 };
-			std::memcpy(buf, layer.m_Name.data(), layer.m_Name.size());
-			useLayers[i] = buf;
+			auto& layer  = m_EnabledLayers[i];
+			useLayers[i] = layer.m_Name.c_str();
 		}
 
 		for (std::size_t i = 0; i < useExtensions.size(); ++i) {
-			auto& extension = m_EnabledExtensions[i];
-			char* buf       = new char[extension.m_Name.size() + 1] { 0 };
-			std::memcpy(buf, extension.m_Name.data(), extension.m_Name.size());
-			useExtensions[i] = buf;
+			auto& extension  = m_EnabledExtensions[i];
+			useExtensions[i] = extension.m_Name.c_str();
 		}
 
 		VkApplicationInfo appInfo = { VK_STRUCTURE_TYPE_APPLICATION_INFO, nullptr, m_AppName.c_str(), m_AppVersion, m_EngineName.c_str(), m_EngineVersion, instanceVersion };
